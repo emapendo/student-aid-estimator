@@ -1,0 +1,70 @@
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.navbar {
+  background: linear-gradient(135deg, #0d6efd 0%, #0062cc 100%);
+}
+.card {
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+.card-stat {
+  transition: transform 0.3s ease;
+}
+.card-stat:hover {
+  transform: translateY(-5px);
+}
+.input-group-text {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+}
+.stat-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: rgba(13, 110, 253, 0.1);
+  margin: 0 auto 20px auto;
+}
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #0d6efd;
+}
+.stat-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+.loan-timeline {
+  position: relative;
+  padding-left: 30px;
+}
+.loan-timeline:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background-color: #dee2e6;
+}
+.loan-milestone {
+  position: relative;
+  padding-bottom: 20px;
+}
+.loan-milestone:before {
+  content: '';
+  position: absolute;
+  left: -30px;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #0d6efd;
+}

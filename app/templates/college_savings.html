@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>College Savings Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/savings.css') }}">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="/">
+      <i class="fas fa-graduation-cap me-2"></i>
+      <span>AidEstimator</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/pell"><i class="fas fa-donate me-1"></i> Pell Grant</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/loan"><i class="fas fa-coins me-1"></i> Loans</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="/college-savings"><i class="fas fa-piggy-bank me-1"></i> College Savings</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/tips"><i class="fas fa-info-circle me-1"></i> Tips</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-lg-7">
+      <div class="card shadow p-4 mb-4">
+        <h2 class="mb-4"><i class="fas fa-piggy-bank me-2 text-primary"></i>College Savings Calculator</h2>
+
+        {% if error %}
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+          </div>
+        {% endif %}
+
+        <form method="post" action="/college-savings">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Target College Cost</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                <input type="number" name="target_amount" step="0.01" class="form-control" value="120000" required>
+              </div>
+              <div class="form-text">Total amount needed for college education</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Years Until College</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                <input type="number" name="years" class="form-control" value="10" required>
+              </div>
+              <div class="form-text">How many years until enrollment</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Expected Annual Return (%)</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-chart-line"></i></span>
+                <input type="number" name="interest_rate" step="0.1" class="form-control" value="5.0" required>
+                <span class="input-group-text">%</span>
+              </div>
+              <div class="form-text">Expected investment return rate</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Initial Deposit</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                <input type="number" name="initial_deposit" step="0.01" class="form-control" value="5000" required>
+              </div>
+              <div class="form-text">Amount already saved for college</div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-calculator me-2"></i>Calculate Monthly Contribution
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      {% if monthly_contribution is not none %}
+        <div class="card shadow p-4 mb-4">
+          <h3 class="mb-3 text-primary">Your Results</h3>
+          <div class="alert alert-success">
+            <h4><i class="fas fa-check-circle me-2"></i>Recommended Monthly Contribution</h4>
+            <h2 class="text-success">${{ monthly_contribution }}</h2>
+          </div>
+          <p>This amount, saved monthly, should help you reach your college savings goal based on your inputs.</p>
+        </div>
+
+        <div class="card shadow p-4">
+          <h4 class="mb-3">Savings Growth Over Time</h4>
+          <canvas id="savingsChart" width="400" height="300"></canvas>
+        </div>
+      {% else %}
+        <div class="card shadow p-4">
+          <h3 class="mb-3">Why Save for College?</h3>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Reduce future student loan debt</li>
+            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Take advantage of compound interest</li>
+            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Provide more college options</li>
+            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Some savings plans offer tax benefits</li>
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<footer class="bg-dark text-white py-4 mt-5">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <h5><i class="fas fa-graduation-cap me-2"></i>AidEstimator</h5>
+        <p>A tool to help students plan for college financial aid.</p>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <p>Disclaimer: Estimates are based on simplified calculations and may differ from official aid determinations.</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% if savings_data %}
+<script>
+  const savingsData = {{ savings_data|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/savings.js') }}"></script>
+{% endif %}
+</body>
+</html>
