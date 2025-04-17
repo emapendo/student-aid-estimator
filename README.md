@@ -44,27 +44,6 @@ A comprehensive financial aid calculator with interactive visualizations to help
 
 ## Cloud Deployment
 
-### Google Cloud Run
-
-1. Build and push the Docker image:
-   ```
-   gcloud builds submit --tag gcr.io/[PROJECT-ID]/financial-aid-calculator
-   ```
-2. Deploy to Cloud Run:
-   ```
-   gcloud run deploy financial-aid-calculator --image gcr.io/[PROJECT-ID]/financial-aid-calculator --platform managed
-   ```
-
-### Vercel Deployment
-
-1. Install Vercel CLI:
-   ```
-   npm i -g vercel
-   ```
-2. Deploy to Vercel:
-   ```
-   vercel
-   ```
 
 ## Usage Notes
 
