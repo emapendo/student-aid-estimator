@@ -49,3 +49,8 @@ body {
     border: 1px solid #dee2e6;
   }
 }
+
+#coverageChart, #breakdownChart {
+  height: 300px !important;
+  max-height: 300px;
+}

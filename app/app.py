@@ -4,15 +4,16 @@ import json
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for session handling
 
-
 def calculate_efc(parent_income, student_income, assets, household_size, in_college):
     try:
+        if in_college > household_size:
+            return None
+
         parent_contribution = max(0, (parent_income - 25000) * 0.22)
         student_contribution = max(0, student_income * 0.5)
         asset_contribution = max(0, assets * 0.12)
         total_efc = parent_contribution + student_contribution + asset_contribution
 
-        # Save breakdowns for visualization
         session['breakdown'] = {
             'parent_contribution': round(parent_contribution, 2),
             'student_contribution': round(student_contribution, 2),
@@ -23,7 +24,6 @@ def calculate_efc(parent_income, student_income, assets, household_size, in_coll
     except:
         return None
 
-
 def calculate_pell(efc, coa):
     try:
         pell_amount = round(max(0, min(7395, coa - efc)), 2)
@@ -31,14 +31,12 @@ def calculate_pell(efc, coa):
     except:
         return None
 
-
 def calculate_loan_payment(amount, interest_rate, years):
     try:
         monthly_rate = interest_rate / 12 / 100
         n_payments = years * 12
         payment = (amount * monthly_rate) / (1 - (1 + monthly_rate) ** -n_payments)
 
-        # Calculate amortization schedule for visualization
         schedule = []
         remaining = amount
         total_interest = 0
@@ -49,7 +47,7 @@ def calculate_loan_payment(amount, interest_rate, years):
             remaining -= principal_payment
             total_interest += interest_payment
 
-            if i % 12 == 0:  # Just store yearly data to keep it manageable
+            if i % 12 == 0:
                 schedule.append({
                     'year': i // 12,
                     'principal_paid': round(amount - remaining, 2),
@@ -68,20 +66,17 @@ def calculate_loan_payment(amount, interest_rate, years):
     except:
         return None
 
-
 def calculate_college_savings(target_amount, years, interest_rate, initial_deposit):
     try:
         monthly_rate = interest_rate / 12 / 100
         n_payments = years * 12
 
-        # PMT formula solved for the periodic payment
         if monthly_rate == 0:
             monthly_contribution = (target_amount - initial_deposit) / n_payments
         else:
             monthly_contribution = (target_amount - initial_deposit * (1 + monthly_rate) ** n_payments) * \
                                    monthly_rate / ((1 + monthly_rate) ** n_payments - 1)
 
-        # Calculate growth over time for visualization
         balance = initial_deposit
         yearly_data = []
 
@@ -104,27 +99,31 @@ def calculate_college_savings(target_amount, years, interest_rate, initial_depos
     except:
         return None
 
-
 @app.route('/')
 def index():
+    session.clear()  # Clear session to avoid stale data
     return render_template("index.html")
-
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
     try:
         data = request.form
-        efc = calculate_efc(
-            float(data['parent_income']),
-            float(data['student_income']),
-            float(data['assets']),
-            int(data['household_size']),
-            int(data['in_college'])
-        )
+        parent_income = float(data['parent_income'])
+        student_income = float(data['student_income'])
+        assets = float(data['assets'])
+        household_size = int(data['household_size'])
+        in_college = int(data['in_college'])
+
+        efc = calculate_efc(parent_income, student_income, assets, household_size, in_college)
+
         if efc is None:
-            raise ValueError("Invalid EFC calculation")
+            return render_template("index.html", error="Invalid input. Please check your values.")
 
         session['efc'] = efc
+        session['coa'] = None  # clear previous
+        session['pell_grant'] = None
+        session['aid_gap'] = None
+
         return redirect(url_for('summary'))
     except:
         return render_template("index.html", error="Invalid input. Please check your values.")
@@ -141,16 +140,11 @@ def pell():
             grant = calculate_pell(efc, coa)
             session['pell_grant'] = grant
             session['coa'] = coa
-
-            # Calculate aid gap for visualization
-            net_cost = max(0, coa - grant)
-            session['aid_gap'] = round(net_cost, 2)
-
+            session['aid_gap'] = round(max(0, coa - grant), 2)
             return redirect(url_for('summary'))
         except:
             error = "Invalid input. Please check your values."
     return render_template("pell.html", grant=grant, error=error)
-
 
 @app.route('/summary')
 def summary():
@@ -160,20 +154,15 @@ def summary():
     aid_gap = session.get('aid_gap')
     breakdown = session.get('breakdown')
 
-    total_aid = None
-    if efc is not None and grant is not None:
-        total_aid = round(grant, 2)
+    total_aid = round(grant, 2) if efc is not None and grant is not None else None
 
-    # Convert data for charts
-    chart_data = {}
-    if breakdown:
-        chart_data['efc_breakdown'] = json.dumps(breakdown)
-
-    if coa and grant:
-        chart_data['aid_coverage'] = json.dumps({
+    chart_data = {
+        'efc_breakdown': breakdown,
+        'aid_coverage': {
             'covered': grant,
             'gap': aid_gap
-        })
+        } if coa and grant else None
+    }
 
     return render_template(
         "summary.html",
@@ -183,7 +172,6 @@ def summary():
         total_aid=total_aid,
         chart_data=chart_data
     )
-
 
 @app.route('/loan', methods=['GET', 'POST'])
 def loan():
@@ -211,7 +199,6 @@ def loan():
             error = "Invalid input. Please check your values."
 
     return render_template("loan.html", payment=payment, error=error)
-
 
 @app.route('/college-savings', methods=['GET', 'POST'])
 def college_savings():
@@ -242,26 +229,21 @@ def college_savings():
 
     return render_template("college_savings.html", monthly_contribution=monthly_contribution, error=error)
 
-
 @app.route('/tips')
 def tips():
     return render_template("tips.html")
-
 
 @app.route('/api/efc-breakdown')
 def efc_breakdown_api():
     return jsonify(session.get('breakdown', {}))
 
-
 @app.route('/api/loan-schedule')
 def loan_schedule_api():
     return jsonify(session.get('loan_schedule', []))
 
-
 @app.route('/api/savings-data')
 def savings_data_api():
     return jsonify(session.get('savings_data', []))
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

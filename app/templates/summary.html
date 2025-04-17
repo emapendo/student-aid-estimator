@@ -181,19 +181,17 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% if chart_data.efc_breakdown %}
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    });
-  });
-
-  {% if chart_data %}
-    const coverageData = {{ chart_data.aid_coverage | tojson }};
-    const breakdownData = {{ chart_data.efc_breakdown | tojson }};
-  {% endif %}
+  const breakdownData = {{ chart_data.efc_breakdown | tojson }};
 </script>
+{% endif %}
 
+{% if chart_data.aid_coverage %}
+<script>
+  const coverageData = {{ chart_data.aid_coverage | tojson }};
+</script>
+{% endif %}
 <script src="{{ url_for('static', filename='js/summary.js') }}"></script>
 </body>
 </html>
