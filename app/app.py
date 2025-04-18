@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import json
 
@@ -246,4 +248,5 @@ def savings_data_api():
     return jsonify(session.get('savings_data', []))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
