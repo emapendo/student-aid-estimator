@@ -58,21 +58,21 @@
             <label class="form-label">Loan Amount ($)</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-              <input type="number" name="loan_amount" step="0.01" class="form-control" placeholder="Enter loan amount" required>
+              <input type="number" name="loan_amount" step="0.01" class="form-control" value="{{ request.form.get('loan_amount', '') }}" placeholder="Enter loan amount" required>
             </div>
           </div>
           <div class="mb-3">
             <label class="form-label">Interest Rate (%)</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-percentage"></i></span>
-              <input type="number" name="interest_rate" step="0.01" class="form-control" value="5.5" required>
+              <input type="number" name="interest_rate" step="0.01" class="form-control" value="{{ request.form.get('interest_rate', 5.5) }}" required>
             </div>
           </div>
           <div class="mb-3">
             <label class="form-label">Loan Term (Years)</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-              <input type="number" name="term_years" class="form-control" value="10" required>
+              <input type="number" name="term_years" class="form-control" value="{{ request.form.get('term_years', 10) }}" required>
             </div>
           </div>
           <button type="submit" class="btn btn-primary btn-lg">
@@ -95,13 +95,25 @@
             </div>
             <div class="col-md-4">
               <div class="stat-circle">
-                <div class="stat-number">${{ loan_details.total_payments }}</div>
+                <div class="stat-number">
+                  {% if loan_details %}
+                    ${{ loan_details.total_payments }}
+                  {% else %}
+                    --
+                  {% endif %}
+                </div>
                 <div class="stat-label">Total Payments</div>
               </div>
             </div>
             <div class="col-md-4">
               <div class="stat-circle">
-                <div class="stat-number">${{ loan_details.total_interest }}</div>
+                <div class="stat-number">
+                  {% if loan_details %}
+                    ${{ loan_details.total_interest }}
+                  {% else %}
+                    --
+                  {% endif %}
+                </div>
                 <div class="stat-label">Total Interest</div>
               </div>
             </div>
@@ -155,12 +167,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-
 {% if loan_schedule %}
-<script>
-  const loanChartData = {{ loan_chart_data|tojson }};
-</script>
+<!-- Add this hidden element to store the loan schedule data -->
+<div id="loan-schedule-data" data-schedule='{{ loan_schedule }}' style="display: none;"></div>
 <script src="{{ url_for('static', filename='js/loan.js') }}"></script>
 {% endif %}
 </body>
 </html>
+

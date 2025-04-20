@@ -59,7 +59,7 @@
               <label class="form-label">Target College Cost</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                <input type="number" name="target_amount" step="0.01" class="form-control" value="120000" required>
+                <input type="number" name="target_amount" step="0.01" class="form-control" value="{{ request.form.get('target_amount', 120000) }}" required>
               </div>
               <div class="form-text">Total amount needed for college education</div>
             </div>
@@ -67,7 +67,7 @@
               <label class="form-label">Years Until College</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                <input type="number" name="years" class="form-control" value="10" required>
+                <input type="number" name="years" class="form-control" value="{{ request.form.get('years', 10) }}" required>
               </div>
               <div class="form-text">How many years until enrollment</div>
             </div>
@@ -78,7 +78,7 @@
               <label class="form-label">Expected Annual Return (%)</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-chart-line"></i></span>
-                <input type="number" name="interest_rate" step="0.1" class="form-control" value="5.0" required>
+                <input type="number" name="interest_rate" step="0.1" class="form-control" value="{{ request.form.get('interest_rate', 5.0) }}" required>
                 <span class="input-group-text">%</span>
               </div>
               <div class="form-text">Expected investment return rate</div>
@@ -87,14 +87,35 @@
               <label class="form-label">Initial Deposit</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                <input type="number" name="initial_deposit" step="0.01" class="form-control" value="5000" required>
+                <input type="number" name="initial_deposit" step="0.01" class="form-control" value="{{ request.form.get('initial_deposit', 5000) }}" required>
               </div>
               <div class="form-text">Amount already saved for college</div>
             </div>
           </div>
 
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Additional Contribution</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                <input type="number" name="additional_contribution" step="0.01" class="form-control" value="{{ request.form.get('additional_contribution', 200) }}" required>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Contribution Frequency</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                <select name="contribution_frequency" class="form-select">
+                  <option value="monthly" {% if request.form.get('contribution_frequency') != 'yearly' %}selected{% endif %}>Monthly</option>
+                  <option value="yearly" {% if request.form.get('contribution_frequency') == 'yearly' %}selected{% endif %}>Yearly</option>
+                </select>
+              </div>
+              <div class="form-text">How often you'll add to your savings</div>
+            </div>
+          </div>
+
           <button type="submit" class="btn btn-primary btn-lg">
-            <i class="fas fa-calculator me-2"></i>Calculate Monthly Contribution
+            <i class="fas fa-calculator me-2"></i>Calculate Savings Plan
           </button>
         </form>
       </div>
@@ -104,11 +125,11 @@
       {% if monthly_contribution is not none %}
         <div class="card shadow p-4 mb-4">
           <h3 class="mb-3 text-primary">Your Results</h3>
-          <div class="alert alert-success">
-            <h4><i class="fas fa-check-circle me-2"></i>Recommended Monthly Contribution</h4>
-            <h2 class="text-success">${{ monthly_contribution }}</h2>
+          <div class="alert alert-success mb-3">
+            <h4><i class="fas fa-check-circle me-2"></i>Recommended Additional Contribution</h4>
+            <h2 class="text-success">${{ monthly_contribution }}{% if contribution_frequency == "monthly" %} per month{% else %} per year{% endif %}</h2>
           </div>
-          <p>This amount, saved monthly, should help you reach your college savings goal based on your inputs.</p>
+          <p>This plan, combined with your initial deposit and regular contributions of ${{ additional_contribution }}{% if contribution_frequency == "monthly" %} per month{% else %} per year{% endif %}, should help you reach your college savings goal.</p>
         </div>
 
         <div class="card shadow p-4">

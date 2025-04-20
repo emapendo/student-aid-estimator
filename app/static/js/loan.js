@@ -1,45 +1,49 @@
-document.addEventListener('DOMContentLoaded', function () {
-  if (typeof loanChartData === 'undefined') return;
+document.addEventListener('DOMContentLoaded', function() {
+  // Get the loan schedule data from the data attribute
+  const loanScheduleElement = document.getElementById('loan-schedule-data');
+  if (!loanScheduleElement) return;
 
-  const ctx = document.getElementById('loanChart').getContext('2d');
+  const loanSchedule = JSON.parse(loanScheduleElement.dataset.schedule);
+
+  const ctx = document.getElementById('loanBalanceChart').getContext('2d');
+
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: loanChartData.map((item, i) => `Month ${i + 1}`),
-      datasets: [
-        {
-          label: 'Remaining Balance',
-          data: loanChartData.map(item => item.remaining_balance),
-          borderColor: '#0d6efd',
-          fill: false,
-          tension: 0.3
-        },
-        {
-          label: 'Principal Paid',
-          data: loanChartData.map(item => item.principal_paid),
-          borderColor: '#198754',
-          fill: false,
-          tension: 0.3
-        }
-      ]
+      labels: loanSchedule.map(item => `Year ${item.year}`),
+      datasets: [{
+        label: 'Remaining Balance',
+        data: loanSchedule.map(item => item.remaining_balance),
+        borderColor: 'rgba(220, 53, 69, 1)',
+        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+        fill: true
+      }, {
+        label: 'Principal Paid',
+        data: loanSchedule.map(item => item.principal_paid),
+        borderColor: 'rgba(40, 167, 69, 1)',
+        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+        fill: true
+      }]
     },
     options: {
-      responsive: true,
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: function (context) {
-              return `${context.dataset.label}: $${context.raw.toLocaleString()}`;
-            }
-          }
-        }
-      },
       scales: {
         y: {
           beginAtZero: true,
           ticks: {
-            callback: function (value) {
+            callback: function(value) {
               return '$' + value.toLocaleString();
+            }
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) label += ': ';
+              label += '$' + context.raw.toLocaleString();
+              return label;
             }
           }
         }

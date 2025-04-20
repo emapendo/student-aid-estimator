@@ -68,22 +68,21 @@ def calculate_loan_payment(amount, interest_rate, years):
     except:
         return None
 
-def calculate_college_savings(target_amount, years, interest_rate, initial_deposit):
+
+def calculate_college_savings(target_amount, years, interest_rate, initial_deposit, additional_contribution=0,
+                              contribution_frequency="monthly"):
     try:
         monthly_rate = interest_rate / 12 / 100
         n_payments = years * 12
 
-        if monthly_rate == 0:
-            monthly_contribution = (target_amount - initial_deposit) / n_payments
-        else:
-            monthly_contribution = (target_amount - initial_deposit * (1 + monthly_rate) ** n_payments) * \
-                                   monthly_rate / ((1 + monthly_rate) ** n_payments - 1)
+        # Convert yearly contributions to monthly for calculation purposes
+        monthly_contribution = additional_contribution if contribution_frequency == "monthly" else additional_contribution / 12
 
         balance = initial_deposit
         yearly_data = []
 
         for year in range(1, years + 1):
-            for _ in range(12):
+            for month in range(1, 13):
                 interest = balance * monthly_rate
                 balance += interest + monthly_contribution
 
@@ -94,10 +93,26 @@ def calculate_college_savings(target_amount, years, interest_rate, initial_depos
                 'earnings': round(balance - initial_deposit - monthly_contribution * year * 12, 2)
             })
 
-        session['savings_data'] = yearly_data
-        session['monthly_contribution'] = round(monthly_contribution, 2)
+        # Calculate how much MORE they would need to contribute monthly to reach the target
+        remaining_target = target_amount - balance
 
-        return round(monthly_contribution, 2)
+        if remaining_target <= 0:
+            additional_needed = 0  # They'll exceed their target
+        elif monthly_rate == 0:
+            additional_needed = remaining_target / n_payments
+        else:
+            additional_needed = remaining_target * monthly_rate / ((1 + monthly_rate) ** n_payments - 1)
+
+        # Convert to yearly if needed
+        if contribution_frequency == "yearly":
+            additional_needed *= 12
+
+        session['savings_data'] = yearly_data
+        session['monthly_contribution'] = round(additional_needed, 2)
+        session['additional_contribution'] = additional_contribution
+        session['contribution_frequency'] = contribution_frequency
+
+        return round(additional_needed, 2)
     except:
         return None
 
@@ -175,37 +190,41 @@ def summary():
         chart_data=chart_data
     )
 
+
 @app.route('/loan', methods=['GET', 'POST'])
 def loan():
     payment = None
     error = None
     loan_details = None
+    loan_schedule = None
 
     if request.method == 'POST':
         try:
             loan_amount = float(request.form['loan_amount'])
             interest_rate = float(request.form['interest_rate'])
             term_years = int(request.form['term_years'])
+
             payment = calculate_loan_payment(loan_amount, interest_rate, term_years)
             loan_details = session.get('loan_details')
             loan_schedule = session.get('loan_schedule')
-
-            return render_template(
-                "loan.html",
-                payment=payment,
-                error=error,
-                loan_details=loan_details,
-                loan_schedule=json.dumps(loan_schedule)
-            )
-        except:
+        except Exception as e:
             error = "Invalid input. Please check your values."
+            print(f"Error calculating loan payment: {e}")  # For debugging
 
-    return render_template("loan.html", payment=payment, error=error)
+    return render_template(
+        "loan.html",
+        payment=payment,
+        error=error,
+        loan_details=loan_details,
+        loan_schedule=json.dumps(loan_schedule) if loan_schedule else None
+    )
 
 @app.route('/college-savings', methods=['GET', 'POST'])
 def college_savings():
     monthly_contribution = None
     error = None
+    additional_contribution = 0
+    contribution_frequency = "monthly"
 
     if request.method == 'POST':
         try:
@@ -213,23 +232,33 @@ def college_savings():
             years = int(request.form['years'])
             interest_rate = float(request.form['interest_rate'])
             initial_deposit = float(request.form['initial_deposit'])
+            additional_contribution = float(request.form['additional_contribution'])
+            contribution_frequency = request.form['contribution_frequency']
 
             monthly_contribution = calculate_college_savings(
-                target_amount, years, interest_rate, initial_deposit
+                target_amount, years, interest_rate, initial_deposit,
+                additional_contribution, contribution_frequency
             )
 
             savings_data = session.get('savings_data')
+            contribution_frequency = session.get('contribution_frequency')
+            additional_contribution = session.get('additional_contribution')
 
             return render_template(
                 "college_savings.html",
                 monthly_contribution=monthly_contribution,
                 error=error,
-                savings_data=savings_data
+                savings_data=savings_data,
+                contribution_frequency=contribution_frequency,
+                additional_contribution=additional_contribution
             )
         except:
             error = "Invalid input. Please check your values."
 
-    return render_template("college_savings.html", monthly_contribution=monthly_contribution, error=error)
+    return render_template("college_savings.html",
+                          monthly_contribution=monthly_contribution,
+                          error=error,
+                          contribution_frequency=contribution_frequency)
 
 @app.route('/tips')
 def tips():
