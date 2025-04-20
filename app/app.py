@@ -224,7 +224,7 @@ def college_savings():
                 "college_savings.html",
                 monthly_contribution=monthly_contribution,
                 error=error,
-                savings_data=json.dumps(savings_data)
+                savings_data=savings_data
             )
         except:
             error = "Invalid input. Please check your values."
